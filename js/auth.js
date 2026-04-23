@@ -25,7 +25,7 @@ function getCurrentUser() {
 function logout() {
     localStorage.removeItem("loggedIn");
     localStorage.removeItem("userEmail");
-    window.location.replace("login.html");
+    window.location.replace("index.html");
 }
 
 // Render current user in header.
