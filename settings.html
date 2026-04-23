@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="AdminHub - Account settings.">
+    <title>Settings - AdminHub</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <div class="dashboard-wrapper">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">Admin<span>Hub</span></div>
+            <nav>
+                <a href="dashboard.html"><span class="nav-icon">&#127968;</span> Dashboard</a>
+                <a href="users.html"><span class="nav-icon">&#128101;</span> Users</a>
+                <a href="products.html"><span class="nav-icon">&#128230;</span> Products</a>
+                <a href="analytics.html"><span class="nav-icon">&#128202;</span> Analytics</a>
+                <a href="notifications.html"><span class="nav-icon">&#128276;</span> Notifications</a>
+                <a href="settings.html" class="active"><span class="nav-icon">&#9881;</span> Settings</a>
+            </nav>
+        </aside>
+
+        <!-- Main content -->
+        <div class="main-content">
+
+            <!-- Header -->
+            <header class="top-header">
+                <h2>Settings</h2>
+                <div class="header-right">
+                    <span class="user-email" id="userEmail"></span>
+                    <button class="btn btn-danger btn-sm" onclick="logout()">Logout</button>
+                </div>
+            </header>
+
+            <!-- Page content -->
+            <div class="page-content">
+
+                <div class="settings-layout">
+
+                <!-- Profile -->
+                <section class="settings-section">
+                    <h3>Profile</h3>
+                    <form id="profileForm" onsubmit="return saveProfile(event)">
+                        <div class="form-group">
+                            <label for="profileName">Name</label>
+                            <input type="text" id="profileName" placeholder="Enter your name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="profileEmail">Email</label>
+                            <input type="email" id="profileEmail" placeholder="Enter your email" required>
+                        </div>
+                        <div id="profileMsg" class="success-msg"></div>
+                        <button type="submit" class="btn btn-primary">Save Profile</button>
+                    </form>
+                </section>
+
+                <!-- Password -->
+                <section class="settings-section">
+                    <h3>Change Password</h3>
+                    <form id="passwordForm" onsubmit="return changePassword(event)">
+                        <div class="form-group">
+                            <label for="currentPassword">Current Password</label>
+                            <input type="password" id="currentPassword" placeholder="Enter current password" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="newPassword">New Password</label>
+                            <input type="password" id="newPassword" placeholder="Enter new password" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="confirmNewPassword">Confirm New Password</label>
+                            <input type="password" id="confirmNewPassword" placeholder="Confirm new password" required>
+                        </div>
+                        <div id="passwordError" class="error-msg"></div>
+                        <div id="passwordSuccess" class="success-msg"></div>
+                        <button type="submit" class="btn btn-primary">Update Password</button>
+                    </form>
+                </section>
+
+                <!-- Appearance -->
+                <section class="settings-section">
+                    <h3>Appearance</h3>
+                    <div class="toggle-row">
+                        <div>
+                            <p class="toggle-title">Dark Mode</p>
+                            <p class="toggle-subtitle">Use a darker theme for dashboard pages.</p>
+                        </div>
+                        <label class="switch" for="darkModeToggle">
+                            <input type="checkbox" id="darkModeToggle" onchange="handleThemeToggle(event)">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </section>
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script src="js/mock-data.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        checkAuth();
+        applySavedTheme();
+        displayUserInfo();
+
+        // Load saved profile and theme
+        function loadProfile() {
+            var registeredUser = JSON.parse(localStorage.getItem("registeredUser") || "null");
+            var name = localStorage.getItem("profileName") || localStorage.getItem("displayName") || "";
+            var email = localStorage.getItem("userEmail") || (registeredUser ? registeredUser.email : "") || "";
+
+            document.getElementById("profileName").value = name;
+            document.getElementById("profileEmail").value = email;
+            document.getElementById("darkModeToggle").checked = localStorage.getItem("darkMode") === "true";
+        }
+
+        // Save profile
+        function saveProfile(e) {
+            e.preventDefault();
+            var name = document.getElementById("profileName").value.trim();
+            var email = document.getElementById("profileEmail").value.trim();
+
+            if (!name || !email) {
+                return false;
+            }
+
+            localStorage.setItem("profileName", name);
+            localStorage.setItem("displayName", name);
+            localStorage.setItem("userEmail", email);
+
+            // Keep account email aligned with profile email.
+            var registeredUser = JSON.parse(localStorage.getItem("registeredUser") || "null");
+            if (registeredUser) {
+                registeredUser.email = email;
+                localStorage.setItem("registeredUser", JSON.stringify(registeredUser));
+            }
+
+            displayUserInfo();
+
+            var msg = document.getElementById("profileMsg");
+            msg.textContent = "Profile saved successfully!";
+            msg.style.display = "block";
+            setTimeout(function() { msg.style.display = "none"; }, 2000);
+            return false;
+        }
+
+        // Mock password update
+        function changePassword(e) {
+            e.preventDefault();
+            var current = document.getElementById("currentPassword").value;
+            var newPass = document.getElementById("newPassword").value;
+            var confirm = document.getElementById("confirmNewPassword").value;
+            var errorEl = document.getElementById("passwordError");
+            var successEl = document.getElementById("passwordSuccess");
+
+            errorEl.style.display = "none";
+            successEl.style.display = "none";
+
+            var storedUser = JSON.parse(localStorage.getItem("registeredUser"));
+            if (!storedUser) {
+                errorEl.textContent = "No account data found.";
+                errorEl.style.display = "block";
+                return false;
+            }
+
+            if (current !== storedUser.password) {
+                errorEl.textContent = "Current password is incorrect.";
+                errorEl.style.display = "block";
+                return false;
+            }
+
+            if (newPass !== confirm) {
+                errorEl.textContent = "New passwords do not match.";
+                errorEl.style.display = "block";
+                return false;
+            }
+
+            if (newPass.length < 4) {
+                errorEl.textContent = "Password must be at least 4 characters.";
+                errorEl.style.display = "block";
+                return false;
+            }
+
+            storedUser.password = newPass;
+            localStorage.setItem("registeredUser", JSON.stringify(storedUser));
+            // Stored only for audit/demo visibility.
+            localStorage.setItem("passwordLastChanged", new Date().toISOString());
+
+            successEl.textContent = "Password updated successfully!";
+            successEl.style.display = "block";
+            document.getElementById("passwordForm").reset();
+            setTimeout(function() { successEl.style.display = "none"; }, 2000);
+            return false;
+        }
+
+        function handleThemeToggle(e) {
+            setDarkMode(e.target.checked);
+        }
+
+        loadProfile();
+    </script>
+
+</body>
+</html>

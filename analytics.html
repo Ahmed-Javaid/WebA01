@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="AdminHub - Analytics and charts overview.">
+    <title>Analytics - AdminHub</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+    <div class="dashboard-wrapper">
+
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">Admin<span>Hub</span></div>
+            <nav>
+                <a href="dashboard.html"><span class="nav-icon">&#127968;</span> Dashboard</a>
+                <a href="users.html"><span class="nav-icon">&#128101;</span> Users</a>
+                <a href="products.html"><span class="nav-icon">&#128230;</span> Products</a>
+                <a href="analytics.html" class="active"><span class="nav-icon">&#128202;</span> Analytics</a>
+                <a href="notifications.html"><span class="nav-icon">&#128276;</span> Notifications</a>
+                <a href="settings.html"><span class="nav-icon">&#9881;</span> Settings</a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="main-content">
+
+            <header class="top-header">
+                <h2>Analytics</h2>
+                <div class="header-right">
+                    <span class="user-email" id="userEmail"></span>
+                    <button class="btn btn-danger btn-sm" onclick="logout()">Logout</button>
+                </div>
+            </header>
+
+            <div class="page-content">
+
+                <!-- Charts Grid -->
+                <div class="charts-grid">
+
+                    <!-- Bar Chart: Monthly Revenue -->
+                    <div class="chart-container">
+                        <h3>Monthly Revenue</h3>
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+
+                    <!-- Doughnut Chart: Users by Role -->
+                    <div class="chart-container">
+                        <h3>Users by Role</h3>
+                        <canvas id="rolesChart"></canvas>
+                    </div>
+
+                    <!-- Line Chart: Orders Trend -->
+                    <div class="chart-container">
+                        <h3>Orders Trend (6 Months)</h3>
+                        <canvas id="ordersLineChart"></canvas>
+                    </div>
+
+                    <!-- Pie Chart: Product Status -->
+                    <div class="chart-container">
+                        <h3>Product Stock Status</h3>
+                        <canvas id="stockChart"></canvas>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script src="js/mock-data.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        checkAuth();
+        displayUserInfo();
+
+        // Bar Chart - Monthly Revenue (mock data)
+        function renderRevenueChart() {
+            var ctx = document.getElementById("revenueChart").getContext("2d");
+            new Chart(ctx, {
+                type: "bar",
+                data: {
+                    labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
+                    datasets: [{
+                        label: "Revenue ($)",
+                        data: [4200, 5800, 3100, 6400, 7200, 4900],
+                        backgroundColor: "#4a6cf7",
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+        }
+
+        // Doughnut Chart - Users by Role (read from localStorage)
+        function renderRolesChart() {
+            var users = JSON.parse(localStorage.getItem("users")) || [];
+            // Count users per role
+            var roleCounts = {};
+            for (var i = 0; i < users.length; i++) {
+                var role = users[i].role;
+                roleCounts[role] = (roleCounts[role] || 0) + 1;
+            }
+            var labels = Object.keys(roleCounts);
+            var data = Object.values(roleCounts);
+
+            var ctx = document.getElementById("rolesChart").getContext("2d");
+            new Chart(ctx, {
+                type: "doughnut",
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: ["#4a6cf7", "#2ecc71", "#f59e0b", "#e74c3c", "#8b5cf6"]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: "bottom" }
+                    }
+                }
+            });
+        }
+
+        // Line Chart - Orders trend (mock data)
+        function renderOrdersLineChart() {
+            var ctx = document.getElementById("ordersLineChart").getContext("2d");
+            new Chart(ctx, {
+                type: "line",
+                data: {
+                    labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
+                    datasets: [{
+                        label: "Orders",
+                        data: [30, 45, 28, 50, 62, 38],
+                        borderColor: "#2ecc71",
+                        backgroundColor: "rgba(46, 204, 113, 0.1)",
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+        }
+
+        // Pie Chart - Product stock status (read from localStorage)
+        function renderStockChart() {
+            var products = JSON.parse(localStorage.getItem("products")) || [];
+            var inStock = 0, lowStock = 0, outOfStock = 0;
+            for (var i = 0; i < products.length; i++) {
+                if (products[i].status === "In Stock") inStock++;
+                else if (products[i].status === "Low Stock") lowStock++;
+                else outOfStock++;
+            }
+
+            var ctx = document.getElementById("stockChart").getContext("2d");
+            new Chart(ctx, {
+                type: "pie",
+                data: {
+                    labels: ["In Stock", "Low Stock", "Out of Stock"],
+                    datasets: [{
+                        data: [inStock, lowStock, outOfStock],
+                        backgroundColor: ["#2ecc71", "#f59e0b", "#e74c3c"]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: "bottom" }
+                    }
+                }
+            });
+        }
+
+        renderRevenueChart();
+        renderRolesChart();
+        renderOrdersLineChart();
+        renderStockChart();
+    </script>
+
+</body>
+</html>

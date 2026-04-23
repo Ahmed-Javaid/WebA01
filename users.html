@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="AdminHub - Manage all users in one place.">
+    <title>Users - AdminHub</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <div class="dashboard-wrapper">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">Admin<span>Hub</span></div>
+            <nav>
+                <a href="dashboard.html">
+                    <span class="nav-icon">&#127968;</span> Dashboard
+                </a>
+                <a href="users.html" class="active">
+                    <span class="nav-icon">&#128101;</span> Users
+                </a>
+                <a href="products.html">
+                    <span class="nav-icon">&#128230;</span> Products
+                </a>
+                <a href="analytics.html">
+                    <span class="nav-icon">&#128202;</span> Analytics
+                </a>
+                <a href="notifications.html">
+                    <span class="nav-icon">&#128276;</span> Notifications
+                </a>
+                <a href="settings.html">
+                    <span class="nav-icon">&#9881;</span> Settings
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main content -->
+        <div class="main-content">
+
+            <!-- Header -->
+            <header class="top-header">
+                <h2>User Management</h2>
+                <div class="header-right">
+                    <span class="user-email" id="userEmail"></span>
+                    <button class="btn btn-danger btn-sm" onclick="logout()">Logout</button>
+                </div>
+            </header>
+
+            <!-- Page content -->
+            <div class="page-content">
+
+                <!-- Controls -->
+                <div class="table-header">
+                    <input type="text" class="search-input" id="searchInput" placeholder="Search users..." oninput="renderUsers()">
+                    <button class="btn btn-primary" onclick="openModal()">+ Add User</button>
+                </div>
+
+                <!-- Users table -->
+                <div class="data-table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody"></tbody>
+                    </table>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- User form modal -->
+    <div class="modal-overlay" id="userModal">
+        <div class="modal">
+            <h3 id="modalTitle">Add User</h3>
+            <form id="userForm" onsubmit="return saveUser(event)">
+                <input type="hidden" id="editUserId" value="">
+
+                <div class="form-group">
+                    <label for="userName">Name</label>
+                    <input type="text" id="userName" placeholder="Full name" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="userEmailInput">Email</label>
+                    <input type="email" id="userEmailInput" placeholder="Email address" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="userRole">Role</label>
+                    <select id="userRole">
+                        <option value="Admin">Admin</option>
+                        <option value="Editor">Editor</option>
+                        <option value="Publisher">Publisher</option>
+                        <option value="Reviewer">Reviewer</option>
+                        <option value="Moderator">Moderator</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="userStatus">Status</label>
+                    <select id="userStatus">
+                        <option value="Active">Active</option>
+                        <option value="Inactive">Inactive</option>
+                        <option value="Suspended">Suspended</option>
+                    </select>
+                </div>
+
+                <div class="modal-buttons">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="js/mock-data.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        checkAuth();
+        displayUserInfo();
+
+        function getUsers() {
+            return JSON.parse(localStorage.getItem("users")) || [];
+        }
+
+        function setUsers(users) {
+            localStorage.setItem("users", JSON.stringify(users));
+        }
+
+        // Render user list with search
+        function renderUsers() {
+            var users = getUsers();
+            var search = document.getElementById("searchInput").value.toLowerCase();
+            var tbody = document.getElementById("usersTableBody");
+            tbody.innerHTML = "";
+
+            var count = 0;
+            for (var i = 0; i < users.length; i++) {
+                var u = users[i];
+                if (search && u.name.toLowerCase().indexOf(search) === -1 &&
+                    u.email.toLowerCase().indexOf(search) === -1 &&
+                    u.role.toLowerCase().indexOf(search) === -1) {
+                    continue;
+                }
+                count++;
+
+                var badgeClass = "badge-active";
+                if (u.status === "Inactive") badgeClass = "badge-inactive";
+                if (u.status === "Suspended") badgeClass = "badge-suspended";
+
+                var row = "<tr>" +
+                    "<td>" + count + "</td>" +
+                    "<td>" + u.name + "</td>" +
+                    "<td>" + u.email + "</td>" +
+                    "<td>" + u.role + "</td>" +
+                    "<td><span class='badge " + badgeClass + "'>" + u.status + "</span></td>" +
+                    "<td class='actions'>" +
+                        "<button class='btn btn-primary btn-sm' onclick='editUser(" + u.id + ")'>Edit</button>" +
+                        "<button class='btn btn-danger btn-sm' onclick='deleteUser(" + u.id + ")'>Delete</button>" +
+                    "</td>" +
+                "</tr>";
+                tbody.innerHTML += row;
+            }
+
+            if (count === 0) {
+                tbody.innerHTML = "<tr><td colspan='6' style='text-align:center; color:#94a3b8;'>No users found.</td></tr>";
+            }
+        }
+
+        function openModal() {
+            document.getElementById("modalTitle").textContent = "Add User";
+            document.getElementById("editUserId").value = "";
+            document.getElementById("userForm").reset();
+            document.getElementById("userModal").classList.add("show");
+        }
+
+        function closeModal() {
+            document.getElementById("userModal").classList.remove("show");
+        }
+
+        function editUser(id) {
+            var users = getUsers();
+            var user = null;
+            for (var i = 0; i < users.length; i++) {
+                if (users[i].id === id) {
+                    user = users[i];
+                    break;
+                }
+            }
+            if (!user) return;
+
+            document.getElementById("modalTitle").textContent = "Edit User";
+            document.getElementById("editUserId").value = user.id;
+            document.getElementById("userName").value = user.name;
+            document.getElementById("userEmailInput").value = user.email;
+            document.getElementById("userRole").value = user.role;
+            document.getElementById("userStatus").value = user.status;
+            document.getElementById("userModal").classList.add("show");
+        }
+
+        // Save user changes
+        function saveUser(e) {
+            e.preventDefault();
+            var users = getUsers();
+            var editId = document.getElementById("editUserId").value;
+
+            var name = document.getElementById("userName").value.trim();
+            var email = document.getElementById("userEmailInput").value.trim();
+            var role = document.getElementById("userRole").value;
+            var status = document.getElementById("userStatus").value;
+
+            if (editId) {
+                // Update an existing user.
+                editId = parseInt(editId);
+                for (var i = 0; i < users.length; i++) {
+                    if (users[i].id === editId) {
+                        users[i].name = name;
+                        users[i].email = email;
+                        users[i].role = role;
+                        users[i].status = status;
+                        break;
+                    }
+                }
+            } else {
+                var maxId = 0;
+                for (var i = 0; i < users.length; i++) {
+                    if (users[i].id > maxId) maxId = users[i].id;
+                }
+                users.push({
+                    id: maxId + 1,
+                    name: name,
+                    email: email,
+                    role: role,
+                    status: status
+                });
+            }
+
+            // Persist then refresh the table.
+            setUsers(users);
+            closeModal();
+            renderUsers();
+            return false;
+        }
+
+        function deleteUser(id) {
+            if (!confirm("Are you sure you want to delete this user?")) return;
+
+            var users = getUsers();
+            var filtered = [];
+            for (var i = 0; i < users.length; i++) {
+                if (users[i].id !== id) {
+                    filtered.push(users[i]);
+                }
+            }
+            // Persist after deletion.
+            setUsers(filtered);
+            renderUsers();
+        }
+
+        renderUsers();
+    </script>
+
+</body>
+</html>

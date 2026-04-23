@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Create your AdminHub account.">
+    <title>Sign Up - AdminHub</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <div class="auth-container">
+        <!-- Form panel -->
+        <div class="auth-right">
+            <form class="auth-form" id="signupForm" onsubmit="return handleSignup(event)">
+                <h2>Create Your Account</h2>
+
+                <div class="form-group">
+                    <label for="signupEmail">Email</label>
+                    <input type="email" id="signupEmail" placeholder="Enter your email" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="signupPassword">Password</label>
+                    <input type="password" id="signupPassword" placeholder="Enter a password" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="signupConfirm">Confirm Password</label>
+                    <input type="password" id="signupConfirm" placeholder="Confirm your password" required>
+                </div>
+
+                <div id="signupError" class="error-msg"></div>
+                <div id="signupSuccess" class="success-msg"></div>
+
+                <button type="submit" class="btn btn-primary">Create Account</button>
+
+                <span class="switch-link">
+                    Already have an account? <a href="login.html">Log In</a>
+                </span>
+            </form>
+        </div>
+
+        <!-- Info panel -->
+        <div class="auth-left">
+            <h1>Join AdminHub</h1>
+            <p>Create an account to start managing your business with our powerful dashboard tools.</p>
+        </div>
+    </div>
+
+    <script>
+        if (localStorage.getItem("loggedIn")) {
+            window.location.href = "dashboard.html";
+        }
+
+        // Add a notification for signup events.
+        function addNotification(user, message) {
+            var notifications = JSON.parse(localStorage.getItem("notifications")) || [];
+            var maxId = 0;
+
+            for (var i = 0; i < notifications.length; i++) {
+                if (notifications[i].id > maxId) maxId = notifications[i].id;
+            }
+
+            notifications.unshift({
+                id: maxId + 1,
+                user: user,
+                message: message,
+                time: "just now",
+                read: false
+            });
+
+            localStorage.setItem("notifications", JSON.stringify(notifications));
+        }
+
+        function handleSignup(e) {
+            e.preventDefault();
+
+            var email = document.getElementById("signupEmail").value.trim();
+            var password = document.getElementById("signupPassword").value;
+            var confirm = document.getElementById("signupConfirm").value;
+            var errorEl = document.getElementById("signupError");
+            var successEl = document.getElementById("signupSuccess");
+
+            errorEl.style.display = "none";
+            successEl.style.display = "none";
+
+            if (!email || !password || !confirm) {
+                errorEl.textContent = "All fields are required.";
+                errorEl.style.display = "block";
+                return false;
+            }
+
+            if (password !== confirm) {
+                errorEl.textContent = "Passwords do not match.";
+                errorEl.style.display = "block";
+                return false;
+            }
+
+            if (password.length < 4) {
+                errorEl.textContent = "Password must be at least 4 characters.";
+                errorEl.style.display = "block";
+                return false;
+            }
+
+            var user = { email: email, password: password };
+            localStorage.setItem("registeredUser", JSON.stringify(user));
+            // Track registration in the notifications page.
+            addNotification("System", "New user registered: " + email + ".");
+
+            successEl.textContent = "Account created! Redirecting to login...";
+            successEl.style.display = "block";
+
+            setTimeout(function() {
+                window.location.href = "login.html";
+            }, 1500);
+
+            return false;
+        }
+    </script>
+
+</body>
+</html>

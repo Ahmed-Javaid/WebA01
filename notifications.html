@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="AdminHub - View notifications.">
+    <title>Notifications - AdminHub</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <div class="dashboard-wrapper">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">Admin<span>Hub</span></div>
+            <nav>
+                <a href="dashboard.html"><span class="nav-icon">&#127968;</span> Dashboard</a>
+                <a href="users.html"><span class="nav-icon">&#128101;</span> Users</a>
+                <a href="products.html"><span class="nav-icon">&#128230;</span> Products</a>
+                <a href="analytics.html"><span class="nav-icon">&#128202;</span> Analytics</a>
+                <a href="notifications.html" class="active"><span class="nav-icon">&#128276;</span> Notifications</a>
+                <a href="settings.html"><span class="nav-icon">&#9881;</span> Settings</a>
+            </nav>
+        </aside>
+
+        <!-- Main content -->
+        <div class="main-content">
+
+            <!-- Header -->
+            <header class="top-header">
+                <h2>Notifications</h2>
+                <div class="header-right">
+                    <span class="user-email" id="userEmail"></span>
+                    <button class="btn btn-danger btn-sm" onclick="logout()">Logout</button>
+                </div>
+            </header>
+
+            <!-- Page content -->
+            <div class="page-content">
+
+                <div class="table-header">
+                    <span style="font-size:14px; color:#64748b;" id="unreadCount"></span>
+                    <div class="notification-toolbar">
+                        <button class="btn btn-secondary btn-sm" onclick="markAllRead()">Mark All as Read</button>
+                    </div>
+                </div>
+
+                <!-- Notifications list -->
+                <div class="notifications-list" id="notificationsList"></div>
+
+            </div>
+        </div>
+    </div>
+
+    <script src="js/mock-data.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        checkAuth();
+        displayUserInfo();
+
+        // Initialize mock notifications if not present.
+        function initNotifications() {
+            if (!localStorage.getItem("notifications")) {
+                var notifications = [
+                    { id: 1, user: "System", message: "New user registered: paula@example.com.", time: "5 mins ago", read: false },
+                    { id: 2, user: "System", message: "Order placed for Mechanical Keyboard.", time: "21 mins ago", read: false },
+                    { id: 3, user: "Dave Wood", message: "Updated the inventory for Mechanical Keyboard.", time: "2 hrs ago", read: false },
+                    { id: 4, user: "Kate Young", message: "Assigned you a new task: Review February analytics.", time: "3 hrs ago", read: true },
+                    { id: 5, user: "Anna Lee", message: "Left feedback: \"Loving the new dashboard layout. Keep it up!\"", time: "1 day ago", read: true },
+                    { id: 6, user: "System", message: "Monthly backup completed successfully.", time: "2 days ago", read: true }
+                ];
+                localStorage.setItem("notifications", JSON.stringify(notifications));
+            }
+        }
+
+        function getNotifications() {
+            return JSON.parse(localStorage.getItem("notifications")) || [];
+        }
+
+        function renderNotifications() {
+            var notifications = getNotifications();
+            var container = document.getElementById("notificationsList");
+            container.innerHTML = "";
+
+            // Update unread count before rendering the list.
+            var unread = 0;
+            for (var i = 0; i < notifications.length; i++) {
+                if (!notifications[i].read) unread++;
+            }
+            document.getElementById("unreadCount").textContent = unread + " unread notification" + (unread !== 1 ? "s" : "");
+
+            if (notifications.length === 0) {
+                container.innerHTML = "<p style='text-align:center; color:#94a3b8; padding:40px;'>No notifications.</p>";
+                return;
+            }
+
+            for (var i = 0; i < notifications.length; i++) {
+                var n = notifications[i];
+                var initials = n.user.split(" ").map(function(w) { return w[0]; }).join("").toUpperCase();
+
+                var item = document.createElement("div");
+                item.className = "notification-item" + (n.read ? "" : " unread");
+                item.innerHTML =
+                    "<div class='notif-avatar'>" + initials + "</div>" +
+                    "<div class='notif-body'>" +
+                        "<div class='notif-header'>" +
+                            "<strong>" + n.user + "</strong>" +
+                            "<span class='notif-time'>" + n.time + "</span>" +
+                        "</div>" +
+                        "<p class='notif-message'>" + n.message + "</p>" +
+                    "</div>" +
+                    "<div class='notification-actions'>" +
+                        (!n.read ? "<button class='btn btn-sm btn-primary' onclick='markRead(" + n.id + ")'>Read</button>" : "") +
+                        "<button class='notif-delete-btn' aria-label='Delete notification' title='Delete notification' onclick='deleteNotification(" + n.id + ")'>&times;</button>" +
+                    "</div>";
+                container.appendChild(item);
+            }
+        }
+
+        function markRead(id) {
+            var notifications = getNotifications();
+            for (var i = 0; i < notifications.length; i++) {
+                if (notifications[i].id === id) {
+                    notifications[i].read = true;
+                    break;
+                }
+            }
+            // Persist state after marking one as read.
+            localStorage.setItem("notifications", JSON.stringify(notifications));
+            renderNotifications();
+        }
+
+        function markAllRead() {
+            var notifications = getNotifications();
+            for (var i = 0; i < notifications.length; i++) {
+                notifications[i].read = true;
+            }
+            // Persist state after marking all as read.
+            localStorage.setItem("notifications", JSON.stringify(notifications));
+            renderNotifications();
+        }
+
+        function deleteNotification(id) {
+            var notifications = getNotifications();
+            var filtered = [];
+
+            for (var i = 0; i < notifications.length; i++) {
+                if (notifications[i].id !== id) {
+                    filtered.push(notifications[i]);
+                }
+            }
+
+            // Persist state after deletion.
+            localStorage.setItem("notifications", JSON.stringify(filtered));
+            renderNotifications();
+        }
+
+        initNotifications();
+        renderNotifications();
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Login to AdminHub dashboard.">
+    <title>Login - AdminHub</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <div class="auth-container">
+        <!-- Left panel -->
+        <div class="auth-left">
+            <h1>Welcome Back</h1>
+            <p>Log in to access your dashboard and manage everything from one place.</p>
+        </div>
+
+        <!-- Right panel -->
+        <div class="auth-right">
+            <form class="auth-form" id="loginForm" onsubmit="return handleLogin(event)">
+                <h2>User Login</h2>
+
+                <div class="form-group">
+                    <label for="loginEmail">Email</label>
+                    <input type="email" id="loginEmail" placeholder="Enter your email" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" placeholder="Enter your password" required>
+                </div>
+
+                <div id="loginError" class="error-msg"></div>
+
+                <button type="submit" class="btn btn-primary">Login</button>
+
+                <span class="switch-link">
+                    Don't have an account? <a href="signup.html">Sign Up</a>
+                </span>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        if (localStorage.getItem("loggedIn")) {
+            window.location.href = "dashboard.html";
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+
+            var email = document.getElementById("loginEmail").value.trim();
+            var password = document.getElementById("loginPassword").value;
+            var errorEl = document.getElementById("loginError");
+
+            errorEl.style.display = "none";
+
+            if (!email || !password) {
+                errorEl.textContent = "Please fill in all fields.";
+                errorEl.style.display = "block";
+                return false;
+            }
+
+            var storedUser = localStorage.getItem("registeredUser");
+
+            if (!storedUser) {
+                errorEl.textContent = "No account found. Please sign up first.";
+                errorEl.style.display = "block";
+                return false;
+            }
+
+            var user = JSON.parse(storedUser);
+
+            if (email === user.email && password === user.password) {
+                localStorage.setItem("loggedIn", "true");
+                localStorage.setItem("userEmail", email);
+                window.location.href = "dashboard.html";
+            } else {
+                errorEl.textContent = "Invalid email or password.";
+                errorEl.style.display = "block";
+            }
+
+            return false;
+        }
+    </script>
+
+</body>
+</html>
